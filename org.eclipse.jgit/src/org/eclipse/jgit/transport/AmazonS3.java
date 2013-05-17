@@ -115,7 +115,7 @@ public class AmazonS3 {
 
 	private static final String HMAC = "HmacSHA1"; //$NON-NLS-1$
 
-	private static final String DOMAIN = "s3.amazonaws.com"; //$NON-NLS-1$
+	private static final String DOMAIN = "s3-ap-southeast-2.amazonaws.com"; //$NON-NLS-1$
 
 	private static final String X_AMZ_ACL = "x-amz-acl"; //$NON-NLS-1$
 
