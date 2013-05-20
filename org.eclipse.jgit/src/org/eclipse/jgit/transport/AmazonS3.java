@@ -103,7 +103,8 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * of the bells and whistles of popular client implementations.
  * <p>
  * Authentication is always performed using the user's AWSAccessKeyId and their
- * private AWSSecretAccessKey.
+ * private AWSSecretAccessKey. When provided, an AWSSessionToken may be used for
+ * authentication.
  * <p>
  * Optional client-side encryption may be enabled if requested. The format is
  * compatible with <a href="http://jets3t.s3.amazonaws.com/index.html">jets3t</a>,
@@ -167,6 +168,9 @@ public class AmazonS3 {
 	/** AWSAccessKeyId, public string that identifies the user's account. */
 	private final String publicKey;
 
+	/** AWSSessionToken, token for temporary/session-based account credentials. */
+	private final String sessionToken;
+
 	/** Decoded form of the private AWSSecretAccessKey, to sign requests. */
 	private final SecretKeySpec privateKey;
 
@@ -193,6 +197,9 @@ public class AmazonS3 {
 	 * # AWS Access and Secret Keys (required)
 	 * accesskey: &lt;YourAWSAccessKey&gt;
 	 * secretkey: &lt;YourAWSSecretKey&gt;
+	 *
+	 * # AWS Session Token (optional)
+	 * sessiontoken: &lt;YourAWSSessionToken&gt;
 	 *
 	 * # Access Control List setting to apply to uploads, must be one of:
 	 * # PRIVATE, PUBLIC_READ (defaults to PRIVATE).
@@ -231,6 +238,8 @@ public class AmazonS3 {
 			acl = "public-read"; //$NON-NLS-1$
 		else
 			throw new IllegalArgumentException("Invalid acl: " + pacl); //$NON-NLS-1$
+
+		sessionToken = props.getProperty("sessiontoken"); //$NON-NLS-1$
 
 		try {
 			final String cPas = props.getProperty("password"); //$NON-NLS-1$
@@ -579,6 +588,8 @@ public class AmazonS3 {
 		c.setRequestMethod(method);
 		c.setRequestProperty("User-Agent", "jgit/1.0"); //$NON-NLS-1$ //$NON-NLS-2$
 		c.setRequestProperty("Date", httpNow()); //$NON-NLS-1$
+		if (sessionToken != null)
+			c.setRequestProperty("x-amz-security-token", sessionToken); //$NON-NLS-1$
 		return c;
 	}
 
