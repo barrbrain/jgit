@@ -110,12 +110,13 @@ public class TransportAmazonS3 extends HttpTransport implements WalkTransport {
 		}
 
 		public Set<URIishField> getRequiredFields() {
-			return Collections.unmodifiableSet(EnumSet.of(URIishField.USER,
+			return Collections.unmodifiableSet(EnumSet.of(
 					URIishField.HOST, URIishField.PATH));
 		}
 
 		public Set<URIishField> getOptionalFields() {
-			return Collections.unmodifiableSet(EnumSet.of(URIishField.PASS));
+			return Collections.unmodifiableSet(EnumSet.of(
+					URIishField.USER, URIishField.PASS));
 		}
 
 		public Transport open(URIish uri, Repository local, String remoteName)
@@ -159,6 +160,9 @@ public class TransportAmazonS3 extends HttpTransport implements WalkTransport {
 	}
 
 	private Properties loadProperties() throws NotSupportedException {
+		if (uri.getUser() == null && uri.getPass() == null)
+			return loadIAMProperties();
+
 		if (local.getDirectory() != null) {
 			File propsFile = new File(local.getDirectory(), uri.getUser());
 			if (propsFile.isFile())
@@ -182,6 +186,15 @@ public class TransportAmazonS3 extends HttpTransport implements WalkTransport {
 		} catch (IOException e) {
 			throw new NotSupportedException(MessageFormat.format(
 					JGitText.get().cannotReadFile, propsFile), e);
+		}
+	}
+
+	private static Properties loadIAMProperties()
+			throws NotSupportedException {
+		try {
+			return AmazonS3.properties();
+		} catch (IOException e) {
+			throw new NotSupportedException(JGitText.get().connectionFailed, e);
 		}
 	}
 

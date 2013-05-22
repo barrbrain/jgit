@@ -71,10 +71,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -648,6 +651,31 @@ public class AmazonS3 {
 			p.load(in);
 		} finally {
 			in.close();
+		}
+		return p;
+	}
+
+	static private String readUrlToUtf8String(URL url) throws IOException {
+		return new Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next(); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	static Properties properties()
+			throws IOException {
+		final Properties p = new Properties();
+		final URL security_credentials = new URL("http://instance-data/latest/meta-data/iam/security-credentials/"); //$NON-NLS-1$
+		final String role = readUrlToUtf8String(security_credentials);
+		final URL security_credentials_for_role = new URL(security_credentials.toExternalForm() + role);
+		Matcher m = Pattern.compile("\"([^\"]*)\"\\s*:\\s*\"([^\"]*)\"").matcher(readUrlToUtf8String(security_credentials_for_role)); //$NON-NLS-1$
+		while (m.find()) {
+			String key = m.group(1);
+			String value = m.group(2);
+			if (key.equals("AccessKeyId")) { //$NON-NLS-1$
+				p.setProperty("accesskey", value); //$NON-NLS-1$
+			} else if (key.equals("SecretAccessKey")) { //$NON-NLS-1$
+				p.setProperty("secretkey", value); //$NON-NLS-1$
+			} else if (key.equals("Token")) { //$NON-NLS-1$
+				p.setProperty("sessiontoken", value); //$NON-NLS-1$
+			}
 		}
 		return p;
 	}
